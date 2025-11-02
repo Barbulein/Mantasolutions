@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="description" content="MantaSolutions - Progettazione meccanica e sviluppo prodotto. Modellazione 3D, prototipazione rapida, scansioni 3D e reverse engineering.">
     <title>Mattia Barbolini - MantaSolutions</title>
     
@@ -277,6 +277,7 @@
             z-index: 9999;
             justify-content: center;
             align-items: center;
+            overflow: hidden;
         }
         
         .lightbox.active {
@@ -285,28 +286,33 @@
         
         .lightbox-content {
             position: relative;
-            max-width: 90%;
-            max-height: 90%;
+            width: 100%;
+            height: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 60px 80px;
         }
         
         .lightbox-image {
             max-width: 100%;
-            max-height: 90vh;
+            max-height: 100%;
+            width: auto;
+            height: auto;
             object-fit: contain;
             border-radius: 4px;
+            display: block;
+            margin: 0 auto;
         }
         
         .lightbox-close {
-            position: absolute;
+            position: fixed;
             top: 20px;
             right: 20px;
             font-size: 40px;
             color: white;
             cursor: pointer;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.7);
             width: 50px;
             height: 50px;
             border-radius: 50%;
@@ -314,7 +320,9 @@
             align-items: center;
             justify-content: center;
             transition: all 0.3s ease;
-            z-index: 10000;
+            z-index: 10001;
+            border: none;
+            outline: none;
         }
         
         .lightbox-close:hover {
@@ -324,13 +332,13 @@
         
         .lightbox-prev,
         .lightbox-next {
-            position: absolute;
+            position: fixed;
             top: 50%;
             transform: translateY(-50%);
             font-size: 50px;
             color: white;
             cursor: pointer;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.7);
             width: 60px;
             height: 60px;
             border-radius: 50%;
@@ -339,6 +347,9 @@
             justify-content: center;
             transition: all 0.3s ease;
             user-select: none;
+            z-index: 10001;
+            border: none;
+            outline: none;
         }
         
         .lightbox-prev {
@@ -352,11 +363,10 @@
         .lightbox-prev:hover,
         .lightbox-next:hover {
             background: rgba(0, 80, 255, 0.8);
-            transform: translateY(-50%) scale(1.1);
         }
         
         .lightbox-counter {
-            position: absolute;
+            position: fixed;
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
@@ -365,6 +375,7 @@
             padding: 10px 20px;
             border-radius: 20px;
             font-size: 0.9rem;
+            z-index: 10001;
         }
         
         /* Contact Section */
@@ -459,11 +470,24 @@
                 height: 200px;
             }
             
+            /* FIX LIGHTBOX MOBILE */
+            .lightbox-content {
+                padding: 70px 10px 80px 10px;
+            }
+            
+            .lightbox-image {
+                max-width: 100%;
+                max-height: 100%;
+                width: 100%;
+                height: auto;
+            }
+            
             .lightbox-prev,
             .lightbox-next {
-                width: 50px;
-                height: 50px;
-                font-size: 35px;
+                width: 45px;
+                height: 45px;
+                font-size: 30px;
+                background: rgba(0, 0, 0, 0.8);
             }
             
             .lightbox-prev {
@@ -480,6 +504,13 @@
                 width: 45px;
                 height: 45px;
                 font-size: 35px;
+                background: rgba(0, 0, 0, 0.8);
+            }
+            
+            .lightbox-counter {
+                bottom: 10px;
+                font-size: 0.85rem;
+                padding: 8px 16px;
             }
             
             footer {
@@ -492,6 +523,10 @@
             body::before {
                 position: fixed;
                 background-attachment: scroll;
+            }
+            
+            .lightbox {
+                -webkit-overflow-scrolling: touch;
             }
         }
     </style>
@@ -682,11 +717,11 @@
     </div>
 
     <!-- Lightbox -->
-    <div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
-        <div class="lightbox-close" onclick="closeLightbox(event)">×</div>
+    <div class="lightbox" id="lightbox">
+        <div class="lightbox-close" onclick="closeLightbox()">×</div>
         <div class="lightbox-prev" onclick="changeImage(-1, event)">‹</div>
-        <div class="lightbox-content">
-            <img src="" alt="" class="lightbox-image" id="lightboxImage">
+        <div class="lightbox-content" onclick="closeLightbox()">
+            <img src="" alt="" class="lightbox-image" id="lightboxImage" onclick="event.stopPropagation()">
         </div>
         <div class="lightbox-next" onclick="changeImage(1, event)">›</div>
         <div class="lightbox-counter" id="lightboxCounter">1 / 30</div>
@@ -699,16 +734,19 @@
         function openLightbox(index) {
             currentImageIndex = index;
             updateLightboxImage();
-            document.getElementById('lightbox').classList.add('active');
+            const lightbox = document.getElementById('lightbox');
+            lightbox.classList.add('active');
             document.body.style.overflow = 'hidden';
+            document.body.style.position = 'fixed';
+            document.body.style.width = '100%';
         }
         
-        function closeLightbox(event) {
-            if (event.target.id === 'lightbox' || event.target.classList.contains('lightbox-close')) {
-                document.getElementById('lightbox').classList.remove('active');
-                document.body.style.overflow = 'auto';
-                event.stopPropagation();
-            }
+        function closeLightbox() {
+            const lightbox = document.getElementById('lightbox');
+            lightbox.classList.remove('active');
+            document.body.style.overflow = '';
+            document.body.style.position = '';
+            document.body.style.width = '';
         }
         
         function changeImage(direction, event) {
@@ -737,8 +775,7 @@
             const lightbox = document.getElementById('lightbox');
             if (lightbox.classList.contains('active')) {
                 if (e.key === 'Escape') {
-                    lightbox.classList.remove('active');
-                    document.body.style.overflow = 'auto';
+                    closeLightbox();
                 } else if (e.key === 'ArrowLeft') {
                     changeImage(-1, e);
                 } else if (e.key === 'ArrowRight') {
@@ -751,21 +788,24 @@
         let touchStartX = 0;
         let touchEndX = 0;
         
-        document.getElementById('lightbox').addEventListener('touchstart', function(e) {
+        const lightbox = document.getElementById('lightbox');
+        
+        lightbox.addEventListener('touchstart', function(e) {
             touchStartX = e.changedTouches[0].screenX;
         }, false);
         
-        document.getElementById('lightbox').addEventListener('touchend', function(e) {
+        lightbox.addEventListener('touchend', function(e) {
             touchEndX = e.changedTouches[0].screenX;
             handleSwipe();
         }, false);
         
         function handleSwipe() {
-            if (touchEndX < touchStartX - 50) {
+            const swipeThreshold = 50;
+            if (touchEndX < touchStartX - swipeThreshold) {
                 // Swipe left - next image
                 changeImage(1, new Event('swipe'));
             }
-            if (touchEndX > touchStartX + 50) {
+            if (touchEndX > touchStartX + swipeThreshold) {
                 // Swipe right - previous image
                 changeImage(-1, new Event('swipe'));
             }
